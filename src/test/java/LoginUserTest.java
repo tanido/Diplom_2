@@ -17,7 +17,6 @@ public class LoginUserTest {
     public void setUp() {
         userClient = new UserClient();
         user = User.getRandom();
-        userClient.createUser(user);
     }
 
     @After
@@ -28,8 +27,8 @@ public class LoginUserTest {
     @Test
     @DisplayName("Логин пользователя с валидными данными")
     public void positiveUserLoginTest() {
+        accessToken = userClient.createUser(user).extract().path("accessToken");
         ValidatableResponse response = userClient.loginUser(UserCredentials.from(user));
-        accessToken = response.extract().path("accessToken");
         int statusCode = response.extract().statusCode();
         boolean isUserLoggedIn = response.extract().path("success");
 
@@ -40,7 +39,7 @@ public class LoginUserTest {
     @Test
     @DisplayName("Логин пользователя с невалидным email")
     public void userLoginWithWrongEmailTest() {
-        accessToken = userClient.loginUser(UserCredentials.from(user)).extract().path("accessToken");
+        accessToken = userClient.createUser(user).extract().path("accessToken");
         ValidatableResponse response = userClient.loginUser(UserCredentials.userLoginWithWrongEmail(user));
         int statusCode = response.extract().statusCode();
         boolean isUserLoggedIn = response.extract().path("message").equals("email or password are incorrect");
@@ -52,7 +51,7 @@ public class LoginUserTest {
     @Test
     @DisplayName("Логин пользователя с невалидным password")
     public void userLoginWithWrongPasswordTest() {
-        accessToken = userClient.loginUser(UserCredentials.from(user)).extract().path("accessToken");
+        accessToken = userClient.createUser(user).extract().path("accessToken");
         ValidatableResponse response = userClient.loginUser(UserCredentials.userLoginWithWrongPassword(user));
         int statusCode = response.extract().statusCode();
         boolean isUserLoggedIn = response.extract().path("message").equals("email or password are incorrect");

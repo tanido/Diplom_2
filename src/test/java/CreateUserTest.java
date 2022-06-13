@@ -11,7 +11,6 @@ public class CreateUserTest {
 
     private UserClient userClient;
     private User user;
-    private String accessToken;
 
     @Before
     public void setUp() {
@@ -21,7 +20,11 @@ public class CreateUserTest {
 
     @After
     public void tearDown() {
-        userClient.deleteUser(accessToken);
+        int statusCode = userClient.loginUser(UserCredentials.from(user)).extract().statusCode();
+        if (statusCode == 200) {
+            String accessToken = userClient.loginUser(UserCredentials.from(user)).extract().path("accessToken");
+            userClient.deleteUser(accessToken);
+        }
     }
 
     @Test
@@ -29,7 +32,6 @@ public class CreateUserTest {
     public void userSuccessfullyCreatedTest() {
         ValidatableResponse response = userClient.createUser(user);
         int statusCode = response.extract().statusCode();
-        accessToken = response.extract().path("accessToken");
         boolean isUserCreated = response.extract().path("success");
 
         assertEquals("Отличный от ожидаемого код ответа", 200, statusCode);
@@ -39,7 +41,7 @@ public class CreateUserTest {
     @Test
     @DisplayName("Создание идентичного пользователя")
     public void cannotCreateSameUserTest() {
-        accessToken = userClient.createUser(user).extract().path("accessToken");
+        userClient.createUser(user);
         ValidatableResponse response = userClient.createUser(user);
         int statusCode = response.extract().statusCode();
         boolean isUserWithSameDataNotCreated = response.extract().path("message").equals("User already exists");

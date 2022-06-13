@@ -13,8 +13,6 @@ public class CreateUserWithoutFieldsTest {
 
     private UserClient userClient;
     private final User user;
-    private final int expectedStatusCode;
-    private final String expectedErrorMessage;
 
     @Before
     public void setUp() {
@@ -23,25 +21,23 @@ public class CreateUserWithoutFieldsTest {
 
     @After
     public void tearDown() {
-        int statusCode = userClient.createUser(user).extract().statusCode();
+        int statusCode = userClient.loginUser(UserCredentials.from(user)).extract().statusCode();
         if (statusCode == 200) {
-            String accessToken = userClient.createUser(user).extract().path("accessToken");
+            String accessToken = userClient.loginUser(UserCredentials.from(user)).extract().path("accessToken");
             userClient.deleteUser(accessToken);
         }
     }
 
-    public CreateUserWithoutFieldsTest(User user, int expectedStatusCode, String expectedErrorMessage) {
+    public CreateUserWithoutFieldsTest(User user) {
         this.user = user;
-        this.expectedStatusCode = expectedStatusCode;
-        this.expectedErrorMessage = expectedErrorMessage;
     }
 
     @Parameterized.Parameters
     public static Object[][] getUserData() {
         return new Object[][] {
-                {User.createUserWithoutEmail(), 403, "Email, password and name are required fields"},
-                {User.createUserWithoutPassword(), 403, "Email, password and name are required fields"},
-                {User.createUserWithoutName(), 403, "Email, password and name are required fields"}
+                {User.createUserWithoutEmail()},
+                {User.createUserWithoutPassword()},
+                {User.createUserWithoutName()}
         };
     }
 
@@ -50,7 +46,9 @@ public class CreateUserWithoutFieldsTest {
     public void createUserWithoutFieldsTest() {
         ValidatableResponse response = userClient.createUser(user);
         int actualStatusCode = response.extract().statusCode();
+        int expectedStatusCode = 403;
         String actualErrorMessage = response.extract().path("message");
+        String expectedErrorMessage = "Email, password and name are required fields";
 
         assertEquals("Отличный от ожидаемого код ответа", expectedStatusCode, actualStatusCode);
         assertEquals("Неверное сообщение об ошибке", expectedErrorMessage, actualErrorMessage);
